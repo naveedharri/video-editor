@@ -3,7 +3,7 @@
   "description": "Video editing skill for Claude - stitching, transitions, TikTok-style captions, teasers, and fast GPU transcription using FFmpeg and Remotion",
   "version": "1.0.0",
   "author": "naveedharri",
-  "repository": "https://github.com/naveedharri/video-editor-skill",
+  "repository": "https://github.com/naveedharri/video-editor",
   "license": "MIT",
   "keywords": [
     "video",
