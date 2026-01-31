@@ -304,40 +304,83 @@ export const OverlayTeaser: React.FC<OverlayTeaserProps> = ({
 
 **Always use fade transitions - hard cuts are jarring:**
 
+| Do | Don't |
+|----|-------|
+| Overlap clips during crossfade | Fade to black between clips (gap) |
+| Handle first/last clips separately | Use same fade logic for all clips |
+| Use separate interpolate calls for each case | Create input arrays with duplicate values |
+
+**CRITICAL: Avoid interpolate monotonic error**
+
 ```tsx
-import {interpolate, useCurrentFrame, useVideoConfig} from 'remotion';
+// ❌ WRONG - causes "inputRange must be strictly monotonically increasing"
+const fadeInEnd = isFirst ? 0 : FADE_FRAMES;
+interpolate(frame, [0, fadeInEnd, ...], ...) // [0, 0, ...] is INVALID
 
-const OverlayClipWithFade: React.FC<{clipDuration: number}> = ({clipDuration}) => {
-  const frame = useCurrentFrame();
-  const {fps} = useVideoConfig();
+// ✅ CORRECT - separate cases for first/middle/last clips
+const FADE_FRAMES = 10; // 0.2s at 50fps
 
-  const fadeFrames = Math.round(0.2 * fps); // 0.2s fade (10 frames at 50fps)
-
-  const opacity = interpolate(
+let opacity = 1;
+if (!isFirst && !isLast) {
+  // Middle clips: fade in AND fade out
+  opacity = interpolate(
     frame,
-    [0, fadeFrames, clipDuration - fadeFrames, clipDuration],
+    [0, FADE_FRAMES, clipDuration - FADE_FRAMES, clipDuration],
     [0, 1, 1, 0],
     {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'}
   );
-
-  return (
-    <div style={{opacity}}>
-      <OffthreadVideo
-        src={staticFile('clip.mp4')}
-        muted
-        volume={0}
-        pauseWhenBuffering={false}
-      />
-    </div>
+} else if (isFirst) {
+  // First clip: NO fade in, only fade out
+  opacity = interpolate(
+    frame,
+    [clipDuration - FADE_FRAMES, clipDuration],
+    [1, 0],
+    {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'}
   );
-};
+} else if (isLast) {
+  // Last clip: only fade in, NO fade out
+  opacity = interpolate(
+    frame,
+    [0, FADE_FRAMES],
+    [0, 1],
+    {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'}
+  );
+}
 ```
 
 | Do | Don't |
 |----|-------|
 | Use `interpolate` for fade in/out | Use hard cuts (jarring) |
+| Handle first/last clips separately | Same logic for all clips |
 | Fade duration: ~10 frames (0.2s) | Fade too long (loses content) |
 | Use `extrapolateLeft/Right: 'clamp'` | Leave extrapolation unbounded |
+
+---
+
+### Semantic Clip Matching (Synced Teaser)
+
+For overlay teasers that sync with intro content:
+
+| Do | Don't |
+|----|-------|
+| Analyze intro transcript for topics/context | Just keyword match |
+| Match clips that SHOW what intro DISCUSSES | Match clips that mention same word |
+| Use clips from different time ranges | Use duplicate/overlapping clips |
+| Transcribe intro to understand segments | Assume intro content |
+
+**Process:**
+1. Transcribe intro to understand what topics are discussed
+2. Find clips from main content that DEMONSTRATE those topics
+3. Time clips to appear when intro MENTIONS the topic
+4. Ensure clips are from unique, non-overlapping time ranges
+
+### Clip Selection Rules
+
+| Do | Don't |
+|----|-------|
+| Ensure all clips are from unique time ranges | Allow duplicate/repeating clips |
+| Scale clips to fill intro duration exactly | Leave gaps between clips |
+| Crossfade overlapping clips seamlessly | Hard cut or fade-to-black |
 
 ### Complete Overlay Teaser Implementation
 
