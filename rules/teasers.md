@@ -266,6 +266,184 @@ export const OverlayTeaser: React.FC<OverlayTeaserProps> = ({
 };
 ```
 
+### Required Props for Overlay Video
+
+**Audio Isolation (CRITICAL):**
+```tsx
+<OffthreadVideo
+  src={staticFile('teaser-clip.mp4')}
+  muted                        // Removes audio track
+  volume={0}                   // Ensures zero audio output (use BOTH)
+  pauseWhenBuffering={false}   // Prevents main video pausing when overlay buffers
+/>
+```
+
+| Setting | Problem it Fixes |
+|---------|------------------|
+| `muted` | Removes audio track |
+| `volume={0}` | Ensures zero audio output (use with muted) |
+| `pauseWhenBuffering={false}` | Prevents main video pausing when overlay buffers |
+
+**DON'T:** Use only `muted` - incomplete isolation. Always use `muted` AND `volume={0}` together.
+
+### Required Props for Overlay Sequence
+
+```tsx
+<Sequence
+  from={0}
+  durationInFrames={clipDuration}
+  premountFor={50}  // Preloads clip to avoid loading stutter
+>
+```
+
+| Setting | Problem it Fixes |
+|---------|------------------|
+| `premountFor={50}` | Preloads next clip to avoid loading stutter and audio glitches |
+
+### Fade Transitions for Overlay Clips
+
+**Always use fade transitions - hard cuts are jarring:**
+
+```tsx
+import {interpolate, useCurrentFrame, useVideoConfig} from 'remotion';
+
+const OverlayClipWithFade: React.FC<{clipDuration: number}> = ({clipDuration}) => {
+  const frame = useCurrentFrame();
+  const {fps} = useVideoConfig();
+
+  const fadeFrames = Math.round(0.2 * fps); // 0.2s fade (10 frames at 50fps)
+
+  const opacity = interpolate(
+    frame,
+    [0, fadeFrames, clipDuration - fadeFrames, clipDuration],
+    [0, 1, 1, 0],
+    {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'}
+  );
+
+  return (
+    <div style={{opacity}}>
+      <OffthreadVideo
+        src={staticFile('clip.mp4')}
+        muted
+        volume={0}
+        pauseWhenBuffering={false}
+      />
+    </div>
+  );
+};
+```
+
+| Do | Don't |
+|----|-------|
+| Use `interpolate` for fade in/out | Use hard cuts (jarring) |
+| Fade duration: ~10 frames (0.2s) | Fade too long (loses content) |
+| Use `extrapolateLeft/Right: 'clamp'` | Leave extrapolation unbounded |
+
+### Complete Overlay Teaser Implementation
+
+```tsx
+import {
+  AbsoluteFill,
+  OffthreadVideo,
+  Sequence,
+  staticFile,
+  useCurrentFrame,
+  useVideoConfig,
+  interpolate,
+} from 'remotion';
+
+interface OverlayClip {
+  src: string;
+  startMs: number;
+  endMs: number;
+}
+
+const OVERLAY_CLIPS: OverlayClip[] = [
+  {src: 'part2.mp4', startMs: 45000, endMs: 52000},
+  {src: 'part3.mp4', startMs: 120000, endMs: 127000},
+];
+
+export const IntroWithOverlayTeaser: React.FC<{
+  position: 'left' | 'right';
+  size: number;
+}> = ({position, size}) => {
+  const {fps} = useVideoConfig();
+
+  return (
+    <AbsoluteFill>
+      {/* Main intro video */}
+      <OffthreadVideo src={staticFile('intro.mp4')} />
+
+      {/* Overlay container */}
+      <div
+        style={{
+          position: 'absolute',
+          width: `${size * 100}%`,
+          aspectRatio: '16/9',
+          bottom: 40,
+          [position]: 40,
+          overflow: 'hidden',
+        }}
+      >
+        {OVERLAY_CLIPS.map((clip, index) => {
+          const clipDurationMs = clip.endMs - clip.startMs;
+          const clipDurationFrames = Math.round((clipDurationMs / 1000) * fps);
+          const startFrame = index === 0 ? 0 : /* calculate cumulative */;
+
+          return (
+            <Sequence
+              key={index}
+              from={startFrame}
+              durationInFrames={clipDurationFrames}
+              premountFor={50}
+            >
+              <OverlayClipWithFade
+                src={clip.src}
+                startFrame={Math.round((clip.startMs / 1000) * fps)}
+                endFrame={Math.round((clip.endMs / 1000) * fps)}
+                clipDuration={clipDurationFrames}
+              />
+            </Sequence>
+          );
+        })}
+      </div>
+    </AbsoluteFill>
+  );
+};
+
+const OverlayClipWithFade: React.FC<{
+  src: string;
+  startFrame: number;
+  endFrame: number;
+  clipDuration: number;
+}> = ({src, startFrame, endFrame, clipDuration}) => {
+  const frame = useCurrentFrame();
+  const {fps} = useVideoConfig();
+
+  const fadeFrames = Math.round(0.2 * fps);
+  const opacity = interpolate(
+    frame,
+    [0, fadeFrames, clipDuration - fadeFrames, clipDuration],
+    [0, 1, 1, 0],
+    {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'}
+  );
+
+  return (
+    <div style={{opacity, width: '100%', height: '100%'}}>
+      <OffthreadVideo
+        src={staticFile(src)}
+        startFrom={startFrame}
+        endAt={endFrame}
+        muted
+        volume={0}
+        pauseWhenBuffering={false}
+        style={{width: '100%', height: '100%', objectFit: 'cover'}}
+      />
+    </div>
+  );
+};
+```
+
 ### With Optional Styling (Only If Requested)
 
 ```tsx
