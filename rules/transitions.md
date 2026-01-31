@@ -142,14 +142,14 @@ npx remotion add @remotion/transitions
 ```tsx
 import {TransitionSeries, linearTiming} from '@remotion/transitions';
 import {fade} from '@remotion/transitions/fade';
-import {Video} from '@remotion/media';
+import {OffthreadVideo} from 'remotion';
 import {staticFile} from 'remotion';
 
 export const TransitionExample: React.FC = () => {
   return (
     <TransitionSeries>
       <TransitionSeries.Sequence durationInFrames={150}>
-        <Video src={staticFile('intro.mp4')} />
+        <OffthreadVideo src={staticFile('intro.mp4')} />
       </TransitionSeries.Sequence>
 
       <TransitionSeries.Transition
@@ -158,7 +158,7 @@ export const TransitionExample: React.FC = () => {
       />
 
       <TransitionSeries.Sequence durationInFrames={300}>
-        <Video src={staticFile('main.mp4')} />
+        <OffthreadVideo src={staticFile('main.mp4')} />
       </TransitionSeries.Sequence>
     </TransitionSeries>
   );
@@ -249,14 +249,14 @@ timing={springTiming({
 import {TransitionSeries, linearTiming} from '@remotion/transitions';
 import {fade} from '@remotion/transitions/fade';
 import {slide} from '@remotion/transitions/slide';
-import {Video} from '@remotion/media';
+import {OffthreadVideo} from 'remotion';
 import {staticFile} from 'remotion';
 
 export const MultiClipTransitions: React.FC = () => {
   return (
     <TransitionSeries>
       <TransitionSeries.Sequence durationInFrames={150}>
-        <Video src={staticFile('intro.mp4')} />
+        <OffthreadVideo src={staticFile('intro.mp4')} />
       </TransitionSeries.Sequence>
 
       <TransitionSeries.Transition
@@ -265,7 +265,7 @@ export const MultiClipTransitions: React.FC = () => {
       />
 
       <TransitionSeries.Sequence durationInFrames={300}>
-        <Video src={staticFile('part1.mp4')} />
+        <OffthreadVideo src={staticFile('part1.mp4')} />
       </TransitionSeries.Sequence>
 
       <TransitionSeries.Transition
@@ -274,7 +274,7 @@ export const MultiClipTransitions: React.FC = () => {
       />
 
       <TransitionSeries.Sequence durationInFrames={300}>
-        <Video src={staticFile('part2.mp4')} />
+        <OffthreadVideo src={staticFile('part2.mp4')} />
       </TransitionSeries.Sequence>
 
       <TransitionSeries.Transition
@@ -283,7 +283,7 @@ export const MultiClipTransitions: React.FC = () => {
       />
 
       <TransitionSeries.Sequence durationInFrames={90}>
-        <Video src={staticFile('outro.mp4')} />
+        <OffthreadVideo src={staticFile('outro.mp4')} />
       </TransitionSeries.Sequence>
     </TransitionSeries>
   );
@@ -295,7 +295,7 @@ export const MultiClipTransitions: React.FC = () => {
 ```tsx
 import {TransitionSeries, linearTiming} from '@remotion/transitions';
 import {fade} from '@remotion/transitions/fade';
-import {Video} from '@remotion/media';
+import {OffthreadVideo} from 'remotion';
 import {staticFile} from 'remotion';
 
 interface Clip {
@@ -315,7 +315,7 @@ export const DynamicTransitions: React.FC = () => {
       {clips.map((clip, index) => (
         <>
           <TransitionSeries.Sequence key={index} durationInFrames={clip.durationInFrames}>
-            <Video src={staticFile(clip.src)} />
+            <OffthreadVideo src={staticFile(clip.src)} />
           </TransitionSeries.Sequence>
           {index < clips.length - 1 && (
             <TransitionSeries.Transition

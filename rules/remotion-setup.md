@@ -11,18 +11,102 @@ Guide for setting up and working with Remotion video projects.
 
 ## Project Initialization
 
-### Create New Project
+### Option 1: Manual Setup (Recommended for CLI automation)
+
+The `npx create-video@latest` command has interactive prompts that don't work in CLI automation. Use manual setup instead:
+
+**1. Create package.json with correct versions:**
+```json
+{
+  "name": "video-editor",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "remotion studio",
+    "build": "remotion bundle",
+    "render": "remotion render"
+  },
+  "dependencies": {
+    "@remotion/bundler": "^4.0.242",
+    "@remotion/captions": "^4.0.242",
+    "@remotion/cli": "^4.0.242",
+    "@remotion/transitions": "^4.0.242",
+    "@remotion/install-whisper-cpp": "^4.0.242",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.242"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "typescript": "^5.0.0"
+  }
+}
+```
+
+**IMPORTANT VERSION NOTES:**
+- Use Remotion `^4.0.242` or latest 4.x stable (NOT 4.0.301 - doesn't exist)
+- React MUST be `^18.x` (Remotion 4.x does NOT support React 19)
+- `@remotion/media` does NOT exist - `OffthreadVideo` is in core `remotion` package
+
+**2. Create required files:**
+
+```bash
+mkdir -p src/compositions public
+```
+
+**3. Create src/index.ts:**
+```tsx
+import {registerRoot} from 'remotion';
+import {RemotionRoot} from './Root';
+
+registerRoot(RemotionRoot);
+```
+
+**4. Create src/Root.tsx:**
+```tsx
+import {Composition} from 'remotion';
+import {MyVideo} from './compositions/MyVideo';
+
+export const RemotionRoot: React.FC = () => {
+  return (
+    <Composition
+      id="MyVideo"
+      component={MyVideo}
+      durationInFrames={900}
+      fps={30}
+      width={1920}
+      height={1080}
+    />
+  );
+};
+```
+
+**5. Create remotion.config.ts:**
+```ts
+import {Config} from '@remotion/cli/config';
+Config.setVideoImageFormat('jpeg');
+```
+
+**6. Install and run:**
+```bash
+npm install
+npm run dev
+```
+
+### Option 2: Interactive Setup (Manual use only)
+
 ```bash
 npx create-video@latest video-editor
 cd video-editor
 ```
 
-### Install Required Packages
+**Note:** This has interactive prompts - only use when running manually, not in scripts.
+
+### Install Additional Packages
 ```bash
-npx remotion add @remotion/media        # For <Video> component
-npx remotion add @remotion/transitions  # For transitions
-npx remotion add @remotion/captions     # For captions
+npm install @remotion/transitions @remotion/captions
 ```
+
+**DO NOT install `@remotion/media`** - it doesn't exist. Use `OffthreadVideo` from core `remotion` package.
 
 ---
 
@@ -103,23 +187,30 @@ npx remotion render MyVideo out/video.mp4 --codec h264 --audio-codec aac
 
 ## Common Components
 
-### Video
-```tsx
-import {Video} from '@remotion/media';
-import {staticFile} from 'remotion';
+### OffthreadVideo (NOT Video from @remotion/media)
 
-<Video src={staticFile('video.mp4')} />
+**IMPORTANT:** `@remotion/media` does NOT exist. Use `OffthreadVideo` from core `remotion` package:
+
+```tsx
+import {OffthreadVideo, staticFile} from 'remotion';
+
+<OffthreadVideo src={staticFile('video.mp4')} />
 
 // With trimming
-<Video
+<OffthreadVideo
   src={staticFile('video.mp4')}
   startFrom={30}         // Start at frame 30
   endAt={150}            // End at frame 150
 />
 
 // With speed change
-<Video src={staticFile('video.mp4')} playbackRate={2} />
+<OffthreadVideo src={staticFile('video.mp4')} playbackRate={2} />
 ```
+
+**Why OffthreadVideo?**
+- Renders video frames off the main thread (better performance)
+- Required for server-side rendering
+- `<Video>` component exists but `OffthreadVideo` is preferred
 
 ### staticFile
 Always use `staticFile()` for assets in `public/` folder:

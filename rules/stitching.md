@@ -117,28 +117,29 @@ ffmpeg -i video1.mp4 -i video2.mp4 \
 ### Prerequisites
 
 ```bash
-npx remotion add @remotion/media
+npm install @remotion/transitions
 ```
+
+**Note:** `@remotion/media` does NOT exist. Use `OffthreadVideo` from core `remotion` package.
 
 ### Basic Stitching with Series
 
 The `<Series>` component plays sequences one after another:
 
 ```tsx
-import {Series, staticFile} from 'remotion';
-import {Video} from '@remotion/media';
+import {Series, staticFile, OffthreadVideo} from 'remotion';
 
 export const StitchedVideo: React.FC = () => {
   return (
     <Series>
       <Series.Sequence durationInFrames={300}>
-        <Video src={staticFile('intro.mp4')} />
+        <OffthreadVideo src={staticFile('intro.mp4')} />
       </Series.Sequence>
       <Series.Sequence durationInFrames={600}>
-        <Video src={staticFile('main.mp4')} />
+        <OffthreadVideo src={staticFile('main.mp4')} />
       </Series.Sequence>
       <Series.Sequence durationInFrames={150}>
-        <Video src={staticFile('outro.mp4')} />
+        <OffthreadVideo src={staticFile('outro.mp4')} />
       </Series.Sequence>
     </Series>
   );
@@ -149,7 +150,7 @@ export const StitchedVideo: React.FC = () => {
 
 ```tsx
 import {Series, staticFile} from 'remotion';
-import {Video} from '@remotion/media';
+import {OffthreadVideo} from 'remotion';
 
 interface Clip {
   src: string;
@@ -168,7 +169,7 @@ export const DynamicStitch: React.FC = () => {
     <Series>
       {clips.map((clip, index) => (
         <Series.Sequence key={index} durationInFrames={clip.durationInFrames}>
-          <Video src={staticFile(clip.src)} />
+          <OffthreadVideo src={staticFile(clip.src)} />
         </Series.Sequence>
       ))}
     </Series>
@@ -183,21 +184,21 @@ For smooth transitions between clips, see [transitions.md](transitions.md):
 ```tsx
 import {TransitionSeries, linearTiming} from '@remotion/transitions';
 import {fade} from '@remotion/transitions/fade';
-import {Video} from '@remotion/media';
+import {OffthreadVideo} from 'remotion';
 import {staticFile} from 'remotion';
 
 export const StitchedWithTransitions: React.FC = () => {
   return (
     <TransitionSeries>
       <TransitionSeries.Sequence durationInFrames={300}>
-        <Video src={staticFile('intro.mp4')} />
+        <OffthreadVideo src={staticFile('intro.mp4')} />
       </TransitionSeries.Sequence>
       <TransitionSeries.Transition
         presentation={fade()}
         timing={linearTiming({durationInFrames: 15})}
       />
       <TransitionSeries.Sequence durationInFrames={600}>
-        <Video src={staticFile('main.mp4')} />
+        <OffthreadVideo src={staticFile('main.mp4')} />
       </TransitionSeries.Sequence>
     </TransitionSeries>
   );
