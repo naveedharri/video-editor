@@ -20,6 +20,9 @@ description: |
   - User has .mp4, .mov, .captions.json files or video folders
   - User is confused about video processing implementation
   - Any error occurs in a video-editor project directory
+  - User asks about thumbnails, graphics, overlays, or visual assets for video
+  - User needs to generate images or graphics for video content
+  - User mentions title cards, lower thirds, end screens, or chapter graphics
 ---
 
 ## Intelligent Editing Workflow
@@ -63,6 +66,7 @@ See [rules/intelligent-editing.md](rules/intelligent-editing.md) for detailed wo
 - [rules/captions.md](rules/captions.md) - Add subtitles and TikTok-style captions
 - [rules/teasers.md](rules/teasers.md) - Create 30-second teasers/trailers
 - [rules/title-cards.md](rules/title-cards.md) - Add chapter headers, bumpers, section titles
+- [rules/graphics-generation.md](rules/graphics-generation.md) - Generate thumbnails, overlays, social graphics
 
 ### Reference
 - [rules/ffmpeg-basics.md](rules/ffmpeg-basics.md) - Common FFmpeg patterns and troubleshooting
