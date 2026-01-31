@@ -66,7 +66,46 @@ function findSentences(captions: Caption[]): Sentence[] {
 - Must make sense **when heard independently**
 - Should **create curiosity** without giving everything away
 - Total duration should hit target (e.g., 30 seconds)
-- **CRITICAL: First teaser clip must NOT overlap with intro/main video start** (avoid repetition)
+
+---
+
+## CRITICAL: Teaser Clip Selection Rules
+
+### NEVER Include Clips From:
+
+| Source | Reason |
+|--------|--------|
+| **Intro section** | Intro is about to play - would be redundant |
+| **First 30 seconds of main content** | Too close to where video starts |
+| **Sentences starting with pronouns** | "It", "This", "They" need context |
+| **Sentences starting with conjunctions** | "But", "And", "So" need prior context |
+
+### ALWAYS Pull Clips From:
+
+| Source | Reason |
+|--------|--------|
+| **Main content parts (not intro)** | Teaser previews upcoming content |
+| **Later sections of video** | Creates anticipation for what's coming |
+| **Sentences with explicit subjects** | "AI software...", "The opportunity..." |
+| **Self-contained insights** | Makes sense without surrounding context |
+
+### Bad vs Good Clip Selection
+
+```
+❌ BAD: "But that's not all - there's another opportunity."
+   - Starts with "But" (needs prior context)
+   - Uses "that" (unclear reference)
+
+✅ GOOD: "AI software completely shifts the equation and makes small niches viable."
+   - Starts with explicit subject "AI software"
+   - Complete thought, no prior context needed
+
+❌ BAD: Clip from intro at 0:05-0:12
+   - Intro will play right after teaser - redundant
+
+✅ GOOD: Clip from part3 at 2:15-2:22
+   - From later content, previews what's coming
+```
 
 ### Step 4: Validate Cut Points
 
@@ -147,6 +186,104 @@ PART 1 (235s):
 | **Social Clip** | 15-30s | Single powerful insight |
 | **Trailer** | 60-90s | Story arc with multiple highlights |
 | **Hook** | 5-15s | One attention-grabbing sentence |
+| **Overlay Teaser** | Any | Picture-in-picture preview during intro |
+
+---
+
+## Overlay Teaser (Picture-in-Picture)
+
+An overlay teaser shows a small preview video on top of the main content (e.g., during intro).
+
+### ALWAYS ASK USER PREFERENCES
+
+**Never assume defaults. Always ask:**
+
+| Setting | Question to Ask | Options |
+|---------|-----------------|---------|
+| **Position** | "Where should the overlay appear?" | Left corner / Right corner |
+| **Size** | "What size for the overlay?" | Small (20%) / Medium (25%) / Large (30%) |
+| **Video fit** | "How should the video fit?" | Cropped to fill (cover) / Full video resized (contain) |
+| **Background** | "Add a background behind the overlay?" | None / Black / Blur |
+| **Border** | "Add a border or shadow?" | None / Subtle border / Shadow |
+| **Audio** | "Include overlay audio?" | Muted (default) / With audio |
+
+### Styling Defaults to AVOID
+
+| Don't Add | Unless Asked |
+|-----------|--------------|
+| Black background | User may want transparent |
+| Border/shadow | Keep minimal by default |
+| Rounded corners | Ask first |
+| Audio | Default to **muted** for overlays |
+
+### Implementation
+
+```tsx
+import {AbsoluteFill, OffthreadVideo, staticFile, Sequence} from 'remotion';
+
+interface OverlayTeaserProps {
+  position: 'left' | 'right';
+  size: number; // 0.2 = 20%, 0.25 = 25%, etc.
+  objectFit: 'cover' | 'contain';
+  muted?: boolean;
+}
+
+export const OverlayTeaser: React.FC<OverlayTeaserProps> = ({
+  position,
+  size,
+  objectFit,
+  muted = true, // Default muted for overlays
+}) => {
+  const overlayStyle: React.CSSProperties = {
+    position: 'absolute',
+    width: `${size * 100}%`,
+    aspectRatio: '16/9',
+    bottom: 40,
+    [position === 'left' ? 'left' : 'right']: 40,
+    overflow: 'hidden',
+    // NO background, border, or shadow by default
+  };
+
+  return (
+    <AbsoluteFill>
+      {/* Main video */}
+      <OffthreadVideo src={staticFile('intro.mp4')} />
+
+      {/* Overlay teaser */}
+      <div style={overlayStyle}>
+        <OffthreadVideo
+          src={staticFile('teaser-clip.mp4')}
+          muted={muted}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit, // 'cover' = cropped, 'contain' = full video
+          }}
+        />
+      </div>
+    </AbsoluteFill>
+  );
+};
+```
+
+### With Optional Styling (Only If Requested)
+
+```tsx
+// Only add these if user requests
+const optionalStyles: React.CSSProperties = {
+  // Border - only if asked
+  border: '2px solid rgba(255,255,255,0.3)',
+
+  // Shadow - only if asked
+  boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+
+  // Rounded corners - only if asked
+  borderRadius: 8,
+
+  // Background - only if asked (for 'contain' fit)
+  backgroundColor: 'black',
+};
+```
 
 ## Teaser Settings
 
@@ -422,21 +559,21 @@ ffmpeg -i input.mp4 -t 30 \
 ### Prerequisites
 
 ```bash
-npx remotion add @remotion/media
+npm install @remotion/transitions  # OffthreadVideo is in core remotion package
 ```
 
 ### Basic 30-Second Teaser
 
 ```tsx
 import {AbsoluteFill, staticFile, useVideoConfig} from 'remotion';
-import {Video} from '@remotion/media';
+import {OffthreadVideo} from 'remotion';
 
 export const TeaserVideo: React.FC = () => {
   const {fps} = useVideoConfig();
 
   return (
     <AbsoluteFill>
-      <Video
+      <OffthreadVideo
         src={staticFile('video.mp4')}
         endAt={30 * fps}  // First 30 seconds
       />
@@ -453,7 +590,7 @@ export const TeaserFromMiddle: React.FC = () => {
 
   return (
     <AbsoluteFill>
-      <Video
+      <OffthreadVideo
         src={staticFile('video.mp4')}
         startFrom={60 * fps}  // Start at 1 minute
         endAt={90 * fps}      // End at 1:30
@@ -467,7 +604,7 @@ export const TeaserFromMiddle: React.FC = () => {
 
 ```tsx
 import {AbsoluteFill, staticFile, useVideoConfig, interpolate, useCurrentFrame} from 'remotion';
-import {Video} from '@remotion/media';
+import {OffthreadVideo} from 'remotion';
 
 export const TeaserWithCTA: React.FC = () => {
   const {fps, durationInFrames} = useVideoConfig();
@@ -484,7 +621,7 @@ export const TeaserWithCTA: React.FC = () => {
 
   return (
     <AbsoluteFill>
-      <Video src={staticFile('video.mp4')} endAt={30 * fps} />
+      <OffthreadVideo src={staticFile('video.mp4')} endAt={30 * fps} />
 
       {/* Call to Action */}
       <div
@@ -519,7 +656,7 @@ export const TeaserWithCTA: React.FC = () => {
 
 ```tsx
 import {AbsoluteFill, staticFile, useVideoConfig, interpolate, useCurrentFrame} from 'remotion';
-import {Video} from '@remotion/media';
+import {OffthreadVideo} from 'remotion';
 
 export const TeaserWithFades: React.FC = () => {
   const {fps, durationInFrames} = useVideoConfig();
@@ -536,7 +673,7 @@ export const TeaserWithFades: React.FC = () => {
   return (
     <AbsoluteFill style={{backgroundColor: 'black'}}>
       <AbsoluteFill style={{opacity}}>
-        <Video src={staticFile('video.mp4')} endAt={30 * fps} />
+        <OffthreadVideo src={staticFile('video.mp4')} endAt={30 * fps} />
       </AbsoluteFill>
     </AbsoluteFill>
   );
@@ -547,7 +684,7 @@ export const TeaserWithFades: React.FC = () => {
 
 ```tsx
 import {Series, staticFile, useVideoConfig} from 'remotion';
-import {Video} from '@remotion/media';
+import {OffthreadVideo} from 'remotion';
 
 interface Clip {
   startSeconds: number;
@@ -567,7 +704,7 @@ export const MontageTeaser: React.FC = () => {
     <Series>
       {clips.map((clip, index) => (
         <Series.Sequence key={index} durationInFrames={clip.durationSeconds * fps}>
-          <Video
+          <OffthreadVideo
             src={staticFile('video.mp4')}
             startFrom={clip.startSeconds * fps}
             endAt={(clip.startSeconds + clip.durationSeconds) * fps}
@@ -583,7 +720,7 @@ export const MontageTeaser: React.FC = () => {
 
 ```tsx
 import {AbsoluteFill, Series, staticFile, useVideoConfig} from 'remotion';
-import {Video} from '@remotion/media';
+import {OffthreadVideo} from 'remotion';
 
 export const BrandedTeaser: React.FC = () => {
   const {fps} = useVideoConfig();
@@ -605,7 +742,7 @@ export const BrandedTeaser: React.FC = () => {
 
       {/* 27-second video clip */}
       <Series.Sequence durationInFrames={27 * fps}>
-        <Video src={staticFile('video.mp4')} endAt={27 * fps} />
+        <OffthreadVideo src={staticFile('video.mp4')} endAt={27 * fps} />
       </Series.Sequence>
     </Series>
   );
@@ -662,7 +799,7 @@ ffprobe -v error -show_entries format=duration -of csv=p=0 input.mp4
 ### startFrom and endAt are in frames (Remotion)
 ```tsx
 const {fps} = useVideoConfig();
-<Video
+<OffthreadVideo
   src={staticFile('video.mp4')}
   startFrom={60 * fps}  // 60 seconds
   endAt={90 * fps}      // 90 seconds
@@ -672,5 +809,5 @@ const {fps} = useVideoConfig();
 ### Video shorter than teaser duration (Remotion)
 If source video is shorter than requested clip, it will show black. Use `loop`:
 ```tsx
-<Video src={staticFile('video.mp4')} loop />
+<OffthreadVideo src={staticFile('video.mp4')} loop />
 ```

@@ -124,6 +124,30 @@ Claude must read the full transcript and identify:
 - Should it reveal the ending or create curiosity?
 - Text overlays needed? (title, call-to-action)
 
+### Overlay Teasers (Picture-in-Picture)
+
+**ALWAYS ASK - Never Assume Defaults:**
+
+| Question | Options | DON'T Default To |
+|----------|---------|------------------|
+| "Where should the overlay appear?" | Left / Right corner | Don't assume right |
+| "What size for the overlay?" | Small (20%) / Medium (25%) / Large (30%) | Don't assume 25% |
+| "How should the video fit?" | Cropped to fill / Full video resized | Don't assume cropped |
+| "Add a background behind it?" | None / Black / Blur | Don't add background |
+| "Add border or shadow?" | None / Subtle / Shadow | Don't add styling |
+| "Include overlay audio?" | Muted / With audio | Default to **muted** |
+
+**Clip Selection Rules:**
+- NEVER include clips from intro (intro is about to play - redundant)
+- ONLY pull from main content parts (teaser previews upcoming content)
+- NEVER use clips starting with pronouns (It, This, They) or conjunctions (But, And, So)
+
+**Styling - AVOID Unless Requested:**
+- No black background (user may want transparent)
+- No border/shadow (keep minimal)
+- No rounded corners (ask first)
+- Audio should be muted by default
+
 ### Stitching
 
 **Order:**
